@@ -1,58 +1,60 @@
 "use client";
-import { useEffect } from "react";
+
+import { useState, useRef } from "react";
 
 export default function HomePage() {
-  useEffect(() => {
-    const file = document.getElementById("input");
-    const header_text = document.getElementById("header-text");
-    const progress = document.getElementById("progress");
-    let barPercentage = 0;
+  const fileInputRef = useRef(null);
+  const progressRef = useRef(null);
 
-    file.addEventListener("change", function () {
-      const musicFile = this.files[0];
-      if (musicFile) {
-        header_text.innerText = "Processing File...";
-        file.hidden = true;
-        progress.classList.remove("hidden");
-        const interval = setInterval(() => {
-          barPercentage += 1;
-          progress.value = barPercentage;
-          if (progress >= 100) {
-            clearInterval(interval);
-            console.log("Upload Complete!");
-          }
-        }, 50);
-      }
-    });
-  });
+  const [headerText, setHeaderText] = useState("Add a file:");
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleFileChange = (event) => {
+    const musicFile = event.target.files[0];
+
+    if (musicFile) {
+      setHeaderText("Processing File...");
+      setIsUploading(true);
+
+      let barPercentage = 0;
+      const interval = setInterval(() => {
+        barPercentage += 1;
+
+        if (progressRef.current) {
+          progressRef.current.value = barPercentage;
+        }
+
+        if (barPercentage >= 100) {
+          clearInterval(interval);
+          setHeaderText("Upload Complete!");
+        }
+      }, 50);
+    }
+  };
+
   return (
-    <div
-      id="main-div"
-      className="flex justify-center flex-col m-auto h-screen text-center"
-    >
-      <div>
-        <h1 className="text-7xl font-mono" id="header-text">
-          Add a file:
-        </h1>
-        <br></br>
-        <div>
+    <div className="flex justify-center flex-col m-auto h-screen text-center">
+      <h1 className="text-7xl font-mono">{headerText}</h1>
+
+      <div className="mt-4">
+        {!isUploading && (
           <input
-            id="input"
+            ref={fileInputRef}
             type="file"
             accept=".mp3"
-            className="border-black border-2 text-center p-2 cursor-pointer"
+            onChange={handleFileChange}
+            className="border-black border-2 p-2 cursor-pointer"
           />
+        )}
+
+        {isUploading && (
           <progress
+            ref={progressRef}
             value="0"
             max="100"
-            id="progress"
-            class="
-            hidden
-         [&::-webkit-progress-bar]:bg-green-200 
-         [&::-webkit-progress-value]:bg-green-600 
-         [&::-moz-progress-bar]:bg-green-600"
+            className="w-64 h-4 [&::-webkit-progress-value]:bg-green-600"
           ></progress>
-        </div>
+        )}
       </div>
     </div>
   );
