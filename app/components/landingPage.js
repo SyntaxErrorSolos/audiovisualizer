@@ -44,9 +44,16 @@ export default function HomePage({ onComplete }) {
 
   return (
     <div className="flex justify-center flex-col m-auto h-screen text-center">
-      <h1 className="text-7xl font-mono">{headerText}</h1>
-
+      <h1 className="text-9xl font-extrabold">Audio Visualizer</h1>
+      <h2 className="font-light text-3xl">
+        Visualize your beat drops and frequency changes
+        <br />
+        You may also download your visualizer!
+      </h2>
+      <br></br>
       <div className="mt-4">
+        <h3 className="text-2xl font-extralight">{headerText}</h3>
+
         {!isUploading && (
           <input
             ref={fileInputRef}

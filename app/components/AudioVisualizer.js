@@ -5,6 +5,7 @@ import ThreeJS from "./three";
 
 export default function AudioVisualizer({ file }) {
   const [started, setStarted] = useState(false);
+  const [sphereColor, setSphereColor] = useState("#000000");
   const audioRef = useRef(null);
   const analyserRef = useRef(null);
   const dataArrayRef = useRef(null);
@@ -50,12 +51,16 @@ export default function AudioVisualizer({ file }) {
     const update = () => {
       if (analyserRef.current && dataArrayRef.current) {
         analyserRef.current.getByteFrequencyData(dataArrayRef.current);
-        console.log(dataArrayRef.current[0]);
       }
       rafRef.current = requestAnimationFrame(update);
     };
 
     update();
+
+    audio.addEventListener("ended", () => {
+      console.log("Track finished!");
+      setStarted(false);
+    });
 
     // Cleanup
     return () => {
@@ -75,13 +80,12 @@ export default function AudioVisualizer({ file }) {
     <main style={{ width: "100vw", height: "100vh", position: "relative" }}>
       {!started && (
         <button
-          className="text-black font-mono"
+          className="text-black"
           onClick={() => setStarted(true)}
           style={{
             position: "absolute",
             bottom: "10%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
+            left: "90%",
             padding: "1rem 2rem",
             fontSize: "1.5rem",
             cursor: "pointer",
@@ -92,24 +96,67 @@ export default function AudioVisualizer({ file }) {
         </button>
       )}
       {started && (
-        <button
-          className="text-black font-mono "
-          id="pause_button"
+        <div
           style={{
             position: "absolute",
             bottom: "10%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            padding: "1rem 2rem",
-            fontSize: "1.5rem",
-            cursor: "pointer",
+            right: "5%",
+            display: "flex",
+            alignItems: "center",
+            gap: "2rem",
             zIndex: 10,
           }}
         >
-          Pause
-        </button>
+          <label
+            htmlFor="sphere_color"
+            style={{
+              width: "60px",
+              height: "30px",
+              backgroundColor: sphereColor,
+              cursor: "pointer",
+              display: "block",
+              border: "1px solid #000",
+            }}
+          />
+
+          <input
+            type="color"
+            id="sphere_color"
+            defaultValue="#000000"
+            value={sphereColor}
+            style={{
+              opacity: 0,
+              position: "absolute",
+              width: 0,
+              height: 0,
+            }}
+            onChange={(e) => {
+              const color = e.target.value;
+              setSphereColor(color);
+            }}
+          />
+
+          <button
+            className="text-black"
+            id="pause_button"
+            style={{
+              fontSize: "1.5rem",
+              cursor: "pointer",
+              background: "none",
+              border: "none",
+              padding: 0,
+            }}
+          >
+            Pause
+          </button>
+        </div>
       )}
-      <ThreeJS analyserRef={analyserRef} dataArrayRef={dataArrayRef} />
+
+      <ThreeJS
+        analyserRef={analyserRef}
+        dataArrayRef={dataArrayRef}
+        sphereColor={sphereColor}
+      />
     </main>
   );
 }

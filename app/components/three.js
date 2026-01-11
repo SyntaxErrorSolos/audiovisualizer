@@ -2,6 +2,7 @@
 import React, { useRef, useMemo } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { ContactShadows } from "@react-three/drei";
+import * as THREE from "three";
 
 const vertexShader = `
   varying vec2 vUv;
@@ -20,8 +21,9 @@ const vertexShader = `
 `;
 
 const fragmentShader = `
+  uniform vec3 uColor;
   void main() {
-    gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+    gl_FragColor = vec4(uColor, 1.0);
   }
 `;
 
@@ -39,13 +41,23 @@ function RiggedCamera({ bassRef }) {
   return null;
 }
 
-function MorphSphere({ analyserRef, dataArrayRef, bassRef }) {
+function MorphSphere({ analyserRef, dataArrayRef, bassRef, sphereColor }) {
   const meshRef = useRef(null);
   const smoothBass = useRef(0);
   const uniforms = useMemo(
-    () => ({ uTime: { value: 0 }, uIntensity: { value: 0 } }),
+    () => ({
+      uTime: { value: 0 },
+      uIntensity: { value: 0 },
+      uColor: { value: new THREE.Color(sphereColor) },
+    }),
     []
   );
+
+  React.useEffect(() => {
+    if (meshRef.current) {
+      meshRef.current.material.uniforms.uColor.value.set(sphereColor);
+    }
+  }, [sphereColor]);
 
   useFrame((state) => {
     if (meshRef.current && analyserRef.current && dataArrayRef.current) {
@@ -77,15 +89,13 @@ function MorphSphere({ analyserRef, dataArrayRef, bassRef }) {
   );
 }
 
-export default function ThreeJS({ analyserRef, dataArrayRef }) {
+export default function ThreeJS({ analyserRef, dataArrayRef, sphereColor }) {
   const bassRef = useRef(0);
 
   return (
     <div style={{ width: "100vw", height: "100vh", background: "#FFFFFF" }}>
       <Canvas dpr={[1, 2]} camera={{ position: [0, 0, 6], fov: 75 }}>
         <RiggedCamera bassRef={bassRef} />
-
-        {/* The Shadow Plane */}
         <ContactShadows
           position={[0, -3.5, 0]}
           opacity={0.4}
@@ -98,6 +108,7 @@ export default function ThreeJS({ analyserRef, dataArrayRef }) {
           analyserRef={analyserRef}
           dataArrayRef={dataArrayRef}
           bassRef={bassRef}
+          sphereColor={sphereColor}
         />
       </Canvas>
     </div>
