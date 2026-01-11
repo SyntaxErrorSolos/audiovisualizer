@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import ThreeJS from "./three";
 
 export default function AudioVisualizer({ file }) {
   useEffect(() => {
@@ -8,9 +9,9 @@ export default function AudioVisualizer({ file }) {
   }, [file]);
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen">
-      <h2 className="text-5xl">Success!</h2>
-      <p className="text-black text-2xl">File Loaded: {file?.name}</p>
-    </div>
+    <main>
+      {" "}
+      <ThreeJS />{" "}
+    </main>
   );
 }
