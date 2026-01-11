@@ -61,7 +61,7 @@ export default function AudioVisualizer({ file }) {
     <main style={{ width: "100vw", height: "100vh", position: "relative" }}>
       {!started && (
         <button
-          className="text-white font-mono"
+          className="text-black font-mono"
           onClick={() => setStarted(true)}
           style={{
             position: "absolute",
@@ -79,7 +79,7 @@ export default function AudioVisualizer({ file }) {
       )}
       {started && (
         <button
-          className="text-white font-mono"
+          className="text-black font-mono"
           onClick={() => setPause(true)}
           style={{
             position: "absolute",
