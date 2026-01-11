@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import ThreeJS from "./three";
 
 export default function AudioVisualizer({ file }) {
-  const [started, setStarted, setPause] = useState(false);
+  const [started, setStarted] = useState(false);
   const audioRef = useRef(null);
   const analyserRef = useRef(null);
   const dataArrayRef = useRef(null);
@@ -32,6 +32,20 @@ export default function AudioVisualizer({ file }) {
     audioCtx.resume().then(() => {
       audio.play();
     });
+
+    const toggle_button = document.getElementById("pause_button");
+
+    if (toggle_button) {
+      toggle_button.addEventListener("click", function () {
+        if (audio.paused) {
+          audio.play();
+          toggle_button.innerText = "Pause";
+        } else {
+          audio.pause();
+          toggle_button.innerText = "Resume";
+        }
+      });
+    }
 
     const update = () => {
       if (analyserRef.current && dataArrayRef.current) {
@@ -79,8 +93,8 @@ export default function AudioVisualizer({ file }) {
       )}
       {started && (
         <button
-          className="text-black font-mono"
-          onClick={() => setPause(true)}
+          className="text-black font-mono "
+          id="pause_button"
           style={{
             position: "absolute",
             bottom: "10%",
