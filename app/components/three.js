@@ -1,56 +1,30 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
+import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 
-export default function ThreeJS() {
-  const containerRef = useRef(null);
+export default function ThreeScene({ audioData }) {
+  const meshRef = useRef(null);
 
-  useEffect(() => {
-    if (!containerRef.current) return;
+  useFrame(() => {
+    if (meshRef.current && audioData) {
+      // 1. Update the math
+      audioData.update();
 
-    const scene = new THREE.Scene();
+      // 2. React to Bass (Scaling)
+      // Normalizing: (audioData.bass / 255) gives 0 to 1
+      const scale = 1 + (audioData.bass / 255) * 1.5;
+      meshRef.current.scale.set(scale, scale, 1);
 
-    const camera = new THREE.PerspectiveCamera(
-      75,
-      containerRef.current.clientWidth / containerRef.current.clientHeight,
-      0.1,
-      1000
-    );
-    camera.position.z = 5;
-
-    const renderer = new THREE.WebGLRenderer();
-    renderer.setSize(
-      containerRef.current.clientWidth,
-      containerRef.current.clientHeight
-    );
-
-    containerRef.current.appendChild(renderer.domElement);
-
-    const geometry = new THREE.BoxGeometry(1, 1, 1);
-    const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-    const cube = new THREE.Mesh(geometry, material);
-    scene.add(cube);
-
-    let animationId;
-    function animate() {
-      animationId = requestAnimationFrame(animate);
-      cube.rotation.x += 0.01;
-      cube.rotation.y += 0.01;
-      renderer.render(scene, camera);
+      // 3. React to Average (Color or Rotation)
+      meshRef.current.rotation.z += 0.01 + (audioData.avg / 255) * 0.1;
     }
-    animate();
+  });
 
-    return () => {
-      cancelAnimationFrame(animationId);
-      geometry.dispose();
-      material.dispose();
-      renderer.dispose();
-
-      if (containerRef.current?.contains(renderer.domElement)) {
-        containerRef.current.removeChild(renderer.domElement);
-      }
-    };
-  }, []);
-
-  return <div ref={containerRef} style={{ width: "100vw", height: "100vh" }} />;
+  return (
+    <mesh ref={meshRef}>
+      <circleGeometry args={[1, 64]} />
+      <meshBasicMaterial color="#00ff00" side={THREE.DoubleSide} />
+    </mesh>
+  );
 }
