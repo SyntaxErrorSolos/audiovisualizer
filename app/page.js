@@ -1,61 +1,30 @@
 "use client";
+import { useState, useEffect } from "react";
+import LandingPage from "./components/landingPage.js";
+import AudioVisualizer from "./components/AudioVisualizer.js";
 
-import { useState, useRef } from "react";
-
-export default function HomePage() {
-  const fileInputRef = useRef(null);
-  const progressRef = useRef(null);
-
-  const [headerText, setHeaderText] = useState("Add a file:");
-  const [isUploading, setIsUploading] = useState(false);
-
-  const handleFileChange = (event) => {
-    const musicFile = event.target.files[0];
-
+export default function MainPage() {
+  const [musicFile, setMusicFile] = useState(null);
+  const [view, setView] = useState("landing");
+  useEffect(() => {
     if (musicFile) {
-      setHeaderText("Processing File...");
-      setIsUploading(true);
-
-      let barPercentage = 0;
-      const interval = setInterval(() => {
-        barPercentage += 1;
-
-        if (progressRef.current) {
-          progressRef.current.value = barPercentage;
-        }
-
-        if (barPercentage >= 100) {
-          clearInterval(interval);
-          setHeaderText("Upload Complete!");
-        }
-      }, 50);
+      console.log("STATE UPDATED: Parent now has the file:", musicFile.name);
     }
+  }, [musicFile]);
+
+  const handleFinishedUploading = (file) => {
+    console.log("PARENT: handleFinishedUploading triggered!");
+    setMusicFile(file);
+    setView("visualizer");
   };
 
   return (
-    <div className="flex justify-center flex-col m-auto h-screen text-center">
-      <h1 className="text-7xl font-mono">{headerText}</h1>
-
-      <div className="mt-4">
-        {!isUploading && (
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".mp3"
-            onChange={handleFileChange}
-            className="border-black border-2 p-2 cursor-pointer"
-          />
-        )}
-
-        {isUploading && (
-          <progress
-            ref={progressRef}
-            value="0"
-            max="100"
-            className="w-64 h-4 [&::-webkit-progress-value]:bg-green-600"
-          ></progress>
-        )}
-      </div>
-    </div>
+    <main>
+      {view === "landing" ? (
+        <LandingPage onComplete={handleFinishedUploading} />
+      ) : (
+        <AudioVisualizer file={musicFile} onBack={() => setView("landing")} />
+      )}
+    </main>
   );
 }
