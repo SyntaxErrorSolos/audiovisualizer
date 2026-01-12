@@ -1,5 +1,5 @@
 "use client";
-import React, { useRef, useMemo } from "react";
+import React, { useRef, useMemo, useEffect } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { ContactShadows } from "@react-three/drei";
 import * as THREE from "three";
@@ -13,7 +13,7 @@ const vertexShader = `
     vUv = uv;
     float noise = sin(position.x * 5.0 + uTime) * cos(position.y * 5.0 + uTime) * sin(position.z * 5.0 + uTime);
     float powerBass = pow(uIntensity, 3.0); 
-    float displacement = noise * (powerBass * 0.6);
+    float displacement = noise * (powerBass * 0.8);
     
     vec3 newPosition = position + normal * displacement;
     gl_Position = projectionMatrix * modelViewMatrix * vec4(newPosition, 1.0);
@@ -22,8 +22,12 @@ const vertexShader = `
 
 const fragmentShader = `
   uniform vec3 uColor;
+  uniform float uIntensity;
+  uniform bool uBloom;
+
   void main() {
-    gl_FragColor = vec4(uColor, 1.0);
+    float boost = uBloom ? (1.0 + pow(uIntensity, 1.5) * 5.0) : 1.0;
+    gl_FragColor = vec4(uColor * boost, 1.0);
   }
 `;
 
@@ -41,23 +45,32 @@ function RiggedCamera({ bassRef }) {
   return null;
 }
 
-function MorphSphere({ analyserRef, dataArrayRef, bassRef, sphereColor }) {
+function MorphSphere({
+  analyserRef,
+  dataArrayRef,
+  bassRef,
+  sphereColor,
+  bloomActive,
+}) {
   const meshRef = useRef(null);
   const smoothBass = useRef(0);
+
   const uniforms = useMemo(
     () => ({
       uTime: { value: 0 },
       uIntensity: { value: 0 },
       uColor: { value: new THREE.Color(sphereColor) },
+      uBloom: { value: bloomActive },
     }),
     []
   );
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (meshRef.current) {
       meshRef.current.material.uniforms.uColor.value.set(sphereColor);
+      meshRef.current.material.uniforms.uBloom.value = bloomActive;
     }
-  }, [sphereColor]);
+  }, [sphereColor, bloomActive]);
 
   useFrame((state) => {
     if (meshRef.current && analyserRef.current && dataArrayRef.current) {
@@ -89,7 +102,12 @@ function MorphSphere({ analyserRef, dataArrayRef, bassRef, sphereColor }) {
   );
 }
 
-export default function ThreeJS({ analyserRef, dataArrayRef, sphereColor }) {
+export default function ThreeJS({
+  analyserRef,
+  dataArrayRef,
+  sphereColor,
+  bloomActive,
+}) {
   const bassRef = useRef(0);
 
   return (
@@ -102,13 +120,14 @@ export default function ThreeJS({ analyserRef, dataArrayRef, sphereColor }) {
           scale={10}
           blur={2.5}
           far={4}
+          color="#FFFFFF"
         />
-
         <MorphSphere
           analyserRef={analyserRef}
           dataArrayRef={dataArrayRef}
           bassRef={bassRef}
           sphereColor={sphereColor}
+          bloomActive={bloomActive}
         />
       </Canvas>
     </div>
