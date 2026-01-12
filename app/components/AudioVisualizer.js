@@ -122,7 +122,6 @@ export default function AudioVisualizer({ file }) {
           <input
             type="color"
             id="sphere_color"
-            defaultValue="#000000"
             value={sphereColor}
             style={{
               opacity: 0,

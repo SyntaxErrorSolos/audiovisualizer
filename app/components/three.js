@@ -12,7 +12,7 @@ const vertexShader = `
   void main() {
     vUv = uv;
     float noise = sin(position.x * 5.0 + uTime) * cos(position.y * 5.0 + uTime) * sin(position.z * 5.0 + uTime);
-    float powerBass = pow(uIntensity, 2.0); 
+    float powerBass = pow(uIntensity, 3.0); 
     float displacement = noise * (powerBass * 0.6);
     
     vec3 newPosition = position + normal * displacement;
