@@ -36,13 +36,11 @@ function RiggedCamera({ bassRef, shakeEnabled }) {
 
   useFrame((state) => {
     const t = state.clock.getElapsedTime();
-    const b = bassRef.current; // This is our 0-1 bass value
+    const b = bassRef.current;
 
-    // Normal smooth movement
     camera.position.x = Math.sin(t * 0.5) * 2.5;
     camera.position.y = Math.cos(t * 0.3) * 1.5;
 
-    // Add Shake: If enabled, jitter the camera based on bass intensity
     if (shakeEnabled && b > 0.1) {
       camera.position.x += (Math.random() - 0.5) * b * 0.5;
       camera.position.y += (Math.random() - 0.5) * b * 0.5;
@@ -123,6 +121,38 @@ function MorphSphere({
   );
 }
 
+function SceneContent({
+  analyserRef,
+  dataArrayRef,
+  sphereColor,
+  bloomActive,
+  shakeEnabled,
+  gridEnabled,
+  bassRef,
+}) {
+  return (
+    <>
+      <RiggedCamera bassRef={bassRef} shakeEnabled={shakeEnabled} />
+      <WorldGrid gridEnabled={gridEnabled} color={sphereColor} />
+      <ContactShadows
+        position={[0, -3.5, 0]}
+        opacity={0.4}
+        scale={10}
+        blur={2.5}
+        far={4}
+        color={sphereColor}
+      />
+      <MorphSphere
+        analyserRef={analyserRef}
+        dataArrayRef={dataArrayRef}
+        bassRef={bassRef}
+        sphereColor={sphereColor}
+        bloomActive={bloomActive}
+      />
+    </>
+  );
+}
+
 export default function ThreeJS({
   analyserRef,
   dataArrayRef,
@@ -130,14 +160,28 @@ export default function ThreeJS({
   bloomActive,
   shakeEnabled,
   gridEnabled,
+  canvasRef,
 }) {
   const bassRef = useRef(0);
 
   return (
     <div style={{ width: "100vw", height: "100vh", background: "#FFFFFF" }}>
-      <Canvas dpr={[1, 2]} camera={{ position: [0, 0, 6], fov: 75 }}>
-        <RiggedCamera bassRef={bassRef} shakeEnabled={shakeEnabled} />
+      <Canvas
+        dpr={[1, 2]}
+        gl={{
+          preserveDrawingBuffer: true,
+          antialias: true,
+          alpha: false,
+        }}
+        onCreated={(state) => {
+          state.gl.setClearColor("#ffffff");
+          canvasRef.current = state.gl.domElement;
+        }}
+        camera={{ position: [0, 0, 6], fov: 75 }}
+      >
+        <color attach="background" args={["#ffffff"]} />
 
+        <RiggedCamera bassRef={bassRef} shakeEnabled={shakeEnabled} />
         <WorldGrid gridEnabled={gridEnabled} color={sphereColor} />
 
         <ContactShadows

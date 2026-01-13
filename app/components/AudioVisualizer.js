@@ -11,11 +11,18 @@ export default function AudioVisualizer({ file }) {
   const [bloomActive, setBloomActive] = useState(false);
   const [shakeEnabled, setShakeEnabled] = useState(false);
   const [gridEnabled, setGridEnabled] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
 
+  const canvasRef = useRef(null);
   const audioRef = useRef(null);
   const analyserRef = useRef(null);
   const dataArrayRef = useRef(null);
+  const chunksRef = useRef([]);
+  const mediaRecorderRef = useRef(null);
   const rafRef = useRef(null);
+
+  const audioCtxRef = useRef(null);
+  const streamDestRef = useRef(null);
 
   const handleChange = (e) => {
     const value = Number(e.target.value);
@@ -34,16 +41,19 @@ export default function AudioVisualizer({ file }) {
     audioRef.current = audio;
 
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    audioCtxRef.current = audioCtx;
     const audioSource = audioCtx.createMediaElementSource(audio);
+    const source = audioCtx.createMediaElementSource(audio);
     const analyser = audioCtx.createAnalyser();
     analyser.fftSize = 256;
     analyserRef.current = analyser;
     dataArrayRef.current = new Uint8Array(analyser.frequencyBinCount);
 
-    audioSource.connect(analyser);
+    const streamDest = audioCtx.createMediaStreamDestination();
+    streamDestRef.current = streamDest;
+    source.connect(analyser);
     analyser.connect(audioCtx.destination);
-
-    audioCtx.resume().then(() => audio.play());
+    source.connect(streamDest);
 
     const update = () => {
       if (analyserRef.current && dataArrayRef.current) {
@@ -53,13 +63,16 @@ export default function AudioVisualizer({ file }) {
     };
     update();
 
-    audio.addEventListener("ended", () => setStarted(false));
+    audio.addEventListener("ended", () => {
+      if (!isRecording) setStarted(false);
+    });
 
     return () => {
       cancelAnimationFrame(rafRef.current);
       audio.pause();
       audio.src = "";
       URL.revokeObjectURL(audioUrl);
+      audioCtx.close();
     };
   }, [started, file]);
 
@@ -73,6 +86,61 @@ export default function AudioVisualizer({ file }) {
       audioRef.current.pause();
       if (btn) btn.innerText = "PLAY";
     }
+  };
+
+  const downloadVisualizer = async () => {
+    if (!audioRef.current || !canvasRef.current || !streamDestRef.current)
+      return;
+
+    setIsRecording(true);
+    chunksRef.current = [];
+
+    audioRef.current.pause();
+    audioRef.current.currentTime = 0;
+
+    const canvasStream = canvasRef.current.captureStream(60);
+    const audioTrack = streamDestRef.current.stream.getAudioTracks()[0];
+    canvasStream.addTrack(audioTrack);
+
+    const mimeTypes = [
+      "video/webm;codecs=vp9,opus",
+      "video/webm;codecs=vp8,opus",
+      "video/webm",
+    ];
+    const supportedType = mimeTypes.find((t) =>
+      MediaRecorder.isTypeSupported(t)
+    );
+
+    const recorder = new MediaRecorder(canvasStream, {
+      mimeType: supportedType,
+      videoBitsPerSecond: 25000000,
+    });
+
+    recorder.ondataavailable = (e) => chunksRef.current.push(e.data);
+    recorder.onstop = () => {
+      const blob = new Blob(chunksRef.current, { type: supportedType });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${file.name.split(".")[0]}_visualizer.webm`;
+      link.click();
+      setIsRecording(false);
+    };
+
+    recorder.start();
+    mediaRecorderRef.current = recorder;
+
+    if (audioCtxRef.current.state === "suspended") {
+      await audioCtxRef.current.resume();
+    }
+    audioRef.current.play();
+
+    audioRef.current.onended = () => {
+      if (recorder.state !== "inactive") {
+        recorder.stop();
+        setStarted(false);
+      }
+    };
   };
 
   if (!file)
@@ -92,6 +160,46 @@ export default function AudioVisualizer({ file }) {
         background: "#FFFFFF",
       }}
     >
+      {isRecording && (
+        <div
+          style={{
+            position: "absolute",
+            top: "10%",
+            left: "10%",
+            transform: "translate(-50%, -50%)",
+            width: "100%",
+            height: "100%",
+            zIndex: 1000,
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            alignItems: "center",
+            pointerEvents: "none",
+          }}
+        >
+          <div
+            style={{
+              width: "50px",
+              height: "50px",
+              borderRadius: "50%",
+              background: "red",
+              animation: "pulse 1.5s infinite",
+            }}
+          />
+          <h1 style={{ fontWeight: "900", marginTop: "20px", color: "black" }}>
+            RECORDING IN PROGRESS...
+          </h1>
+          <p style={{ fontWeight: "700" }}>DO NOT MINIMIZE TAB</p>
+
+          <style>{`
+      @keyframes pulse {
+        0% { transform: scale(0.95); opacity: 1; }
+        70% { transform: scale(1.1); opacity: 0.7; }
+        100% { transform: scale(0.95); opacity: 1; }
+      }
+    `}</style>
+        </div>
+      )}
       {!started ? (
         <button
           onClick={() => setStarted(true)}
@@ -307,6 +415,30 @@ export default function AudioVisualizer({ file }) {
             >
               PAUSE
             </button>
+            <button
+              onClick={downloadVisualizer}
+              disabled={isRecording}
+              style={{
+                width: "100%",
+                padding: "15px",
+                marginTop: "10px",
+                border: "2px solid black",
+                background: isRecording ? "#eee" : "transparent",
+                color: "black",
+                fontWeight: "900",
+                cursor: isRecording ? "not-allowed" : "pointer",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+              }}
+            >
+              {isRecording ? "EXPORTING..." : "DOWNLOAD FULL VIDEO"}
+              {isRecording && (
+                <span style={{ fontSize: "10px", marginTop: "5px" }}>
+                  Do not close tab until finished
+                </span>
+              )}
+            </button>
           </div>
         </>
       )}
@@ -318,6 +450,7 @@ export default function AudioVisualizer({ file }) {
         bloomActive={bloomActive}
         shakeEnabled={shakeEnabled}
         gridEnabled={gridEnabled}
+        canvasRef={canvasRef}
       />
     </main>
   );
