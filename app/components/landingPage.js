@@ -30,7 +30,6 @@ export default function HomePage({ onComplete }) {
 
   return (
     <div className="flex flex-col items-center justify-center h-screen bg-white text-black p-6 select-none">
-      {/* Header Section */}
       <div className="max-w-4xl text-center mb-12">
         <h1 className="text-8xl md:text-9xl font-black tracking-tighter leading-none mb-6">
           AUDIO
@@ -78,7 +77,6 @@ export default function HomePage({ onComplete }) {
               Drag & Drop or Click to Browse
             </p>
 
-            {/* Subtle decorative corners */}
             <div className="absolute top-2 left-2 w-2 h-2 border-t border-l border-current" />
             <div className="absolute top-2 right-2 w-2 h-2 border-t border-r border-current" />
             <div className="absolute bottom-2 left-2 w-2 h-2 border-b border-l border-current" />
@@ -106,9 +104,8 @@ export default function HomePage({ onComplete }) {
         )}
       </div>
 
-      {/* Footer info */}
       <footer className="absolute bottom-10 text-[10px] font-bold tracking-[0.3em] uppercase opacity-30">
-        Built with ❤️ by TheIdiotDev
+        Built with ❤️ by SyntaxErrorSolos
       </footer>
     </div>
   );

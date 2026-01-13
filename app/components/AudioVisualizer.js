@@ -9,6 +9,8 @@ export default function AudioVisualizer({ file }) {
   const [sphereColor, setSphereColor] = useState("#000000");
   const [sphereVolume, setSphereVolume] = useState(100);
   const [bloomActive, setBloomActive] = useState(false);
+  const [shakeEnabled, setShakeEnabled] = useState(false);
+  const [gridEnabled, setGridEnabled] = useState(false);
 
   const audioRef = useRef(null);
   const analyserRef = useRef(null);
@@ -112,7 +114,6 @@ export default function AudioVisualizer({ file }) {
         </button>
       ) : (
         <>
-          {/* Settings Icon */}
           <button
             onClick={() => setIsOpen(!isOpen)}
             style={{
@@ -137,7 +138,6 @@ export default function AudioVisualizer({ file }) {
             />
           </button>
 
-          {/* Slide-out Panel */}
           <div
             style={{
               position: "absolute",
@@ -240,7 +240,57 @@ export default function AudioVisualizer({ file }) {
                 {bloomActive ? "ON" : "OFF"}
               </button>
             </div>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <p style={{ fontWeight: "700", fontSize: "0.8rem" }}>
+                CAMERA SHAKE
+              </p>
+              <button
+                onClick={() => setShakeEnabled(!shakeEnabled)}
+                style={{
+                  padding: "8px 20px",
+                  border: "2px solid black",
+                  cursor: "pointer",
+                  background: shakeEnabled ? "black" : "transparent",
+                  color: shakeEnabled ? "white" : "black",
+                  fontWeight: "900",
+                  transition: "0.3s",
+                }}
+              >
+                {shakeEnabled ? "ON" : "OFF"}
+              </button>
+            </div>
 
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <p style={{ fontWeight: "700", fontSize: "0.8rem" }}>
+                FLOOR GRID
+              </p>
+              <button
+                onClick={() => setGridEnabled(!gridEnabled)}
+                style={{
+                  padding: "8px 20px",
+                  border: "2px solid black",
+                  cursor: "pointer",
+                  background: gridEnabled ? "black" : "transparent",
+                  color: gridEnabled ? "white" : "black",
+                  fontWeight: "900",
+                  transition: "0.3s",
+                }}
+              >
+                {gridEnabled ? "ON" : "OFF"}
+              </button>
+            </div>
             <button
               id="pause_button"
               onClick={togglePlayback}
@@ -266,6 +316,8 @@ export default function AudioVisualizer({ file }) {
         dataArrayRef={dataArrayRef}
         sphereColor={sphereColor}
         bloomActive={bloomActive}
+        shakeEnabled={shakeEnabled}
+        gridEnabled={gridEnabled}
       />
     </main>
   );

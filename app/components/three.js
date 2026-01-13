@@ -31,18 +31,39 @@ const fragmentShader = `
   }
 `;
 
-function RiggedCamera({ bassRef }) {
+function RiggedCamera({ bassRef, shakeEnabled }) {
   const { camera } = useThree();
+
   useFrame((state) => {
     const t = state.clock.getElapsedTime();
-    const b = bassRef.current;
+    const b = bassRef.current; // This is our 0-1 bass value
+
+    // Normal smooth movement
     camera.position.x = Math.sin(t * 0.5) * 2.5;
     camera.position.y = Math.cos(t * 0.3) * 1.5;
-    camera.fov = 75 + b * 15;
-    camera.updateProjectionMatrix();
+
+    // Add Shake: If enabled, jitter the camera based on bass intensity
+    if (shakeEnabled && b > 0.1) {
+      camera.position.x += (Math.random() - 0.5) * b * 0.5;
+      camera.position.y += (Math.random() - 0.5) * b * 0.5;
+      camera.position.z += (Math.random() - 0.5) * b * 0.5;
+    }
+
     camera.lookAt(0, 0, 0);
   });
   return null;
+}
+
+function WorldGrid({ gridEnabled, color }) {
+  if (!gridEnabled) return null;
+
+  return (
+    <gridHelper
+      args={[20, 40, color, "#eeeeee"]}
+      position={[0, -3.5, 0]}
+      rotation={[0, 0, 0]}
+    />
+  );
 }
 
 function MorphSphere({
@@ -107,21 +128,27 @@ export default function ThreeJS({
   dataArrayRef,
   sphereColor,
   bloomActive,
+  shakeEnabled,
+  gridEnabled,
 }) {
   const bassRef = useRef(0);
 
   return (
     <div style={{ width: "100vw", height: "100vh", background: "#FFFFFF" }}>
       <Canvas dpr={[1, 2]} camera={{ position: [0, 0, 6], fov: 75 }}>
-        <RiggedCamera bassRef={bassRef} />
+        <RiggedCamera bassRef={bassRef} shakeEnabled={shakeEnabled} />
+
+        <WorldGrid gridEnabled={gridEnabled} color={sphereColor} />
+
         <ContactShadows
           position={[0, -3.5, 0]}
           opacity={0.4}
           scale={10}
           blur={2.5}
           far={4}
-          color="#FFFFFF"
+          color={sphereColor}
         />
+
         <MorphSphere
           analyserRef={analyserRef}
           dataArrayRef={dataArrayRef}
